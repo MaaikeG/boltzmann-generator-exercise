@@ -5,7 +5,7 @@ from torch import nn
 class Conditioner(nn.Module):
     """Avery simple densely connected network."""
     def __init__(self, dim_in, dims_out, activation=nn.ReLU):
-        super(Conditioner, self).__init__()
+        super().__init__()
 
         layers = []
 
@@ -14,6 +14,8 @@ class Conditioner(nn.Module):
             layers.append(activation())
 
             dim_in = dim_out
+
+        nn.ModuleList()
 
         self.layers = nn.Sequential(*layers)
 

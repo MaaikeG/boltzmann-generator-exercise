@@ -10,7 +10,8 @@ class Flow(torch.nn.Module):
         A list of invertible blocks
     """
     def __init__(self, blocks):
-        self.blocks = blocks
+        super().__init__()
+        self.blocks = torch.nn.ModuleList(blocks)
 
     def forward(self, samples):
         total_jac_det_log = 0

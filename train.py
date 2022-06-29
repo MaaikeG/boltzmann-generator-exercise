@@ -10,11 +10,13 @@ def train(flow, target_distribution, dim, epochs=100, batch_size=256):
         optimizer.zero_grad()
 
         # generate samples
-        samples = torch.normal([dim, batch_size])
+        samples = torch.normal(mean=0, std=1, size=[batch_size, dim])
 
         # transform them to our target distribution
         transformed_samples, jac_log = flow(samples)
-        transformed_energies = target_distribution.potential(transformed_samples)
+
+        with torch.no_grad():
+            transformed_energies = target_distribution.potential(transformed_samples)
 
         # find KL divergence between the
         loss = (transformed_energies - jac_log).mean()

@@ -12,8 +12,8 @@ target_distribution = potentials.gaussian_well.TwoDimensionalDoubleWell()
 
 blocks = [InvertibleBlock(
     transformer=AffineTransformer(
-        conditioner=Conditioner(dim_in=1,
-                                dims_out=[2, 4, 2, 1],
+        conditioner=Conditioner(dim_in=2,
+                                dims_out=[4, 8, 4, 2],
                                 activation=torch.nn.Tanh)
     ))]
 

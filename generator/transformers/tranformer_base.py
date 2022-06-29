@@ -12,8 +12,7 @@ class Transformer(torch.nn.Module):
         A model.
     """
     def __init__(self, conditioner):
-        super(Transformer, self).__init__()
-
+        super().__init__()
         self.conditioner = conditioner
 
     @abc.abstractmethod

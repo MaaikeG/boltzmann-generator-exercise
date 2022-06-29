@@ -25,11 +25,11 @@ class AffineTransformer(Transformer):
 
     def forward(self, pz_1, pz_2):
         cond = self.conditioner(pz_2)
-        px_1 = torch.exp(cond[:, 0]) * pz_1 + cond[:, 1]
-        return torch.cat(px_1, pz_2), log_jacobian_determinant(cond)
+        px_1 = torch.exp(cond[:, 0, None]) * pz_1 + cond[:, 1, None]
+        return torch.cat([px_1, pz_2]), log_jacobian_determinant(cond)
 
 
     def inverse(self, px_1, px_2):
         cond = self.conditioner(px_2)
-        pz_1 = torch.exp(-cond[:, 0]) * (px_1 - cond[:, 1])
-        return torch.cat(pz_1, px_2), 1 / log_jacobian_determinant(cond)
+        pz_1 = torch.exp(-cond[:, 0, None]) * (px_1 - cond[:, 1, None])
+        return torch.cat([pz_1, px_2]), 1 / log_jacobian_determinant(cond)

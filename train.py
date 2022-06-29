@@ -2,7 +2,7 @@ import torch
 from torch.optim import SGD
 
 
-def train(flow, target_distribution, dim, epochs=100, batch_size=256):
+def train(flow, target_distribution, dim, epochs=100, batch_size=1024):
 
     optimizer = SGD(flow.parameters(), lr=0.1)
 
@@ -15,8 +15,7 @@ def train(flow, target_distribution, dim, epochs=100, batch_size=256):
         # transform them to our target distribution
         transformed_samples, jac_log = flow(samples)
 
-        with torch.no_grad():
-            transformed_energies = target_distribution.potential(transformed_samples)
+        transformed_energies = target_distribution.potential(transformed_samples)
 
         # find KL divergence between the
         loss = (transformed_energies - jac_log).mean()
@@ -24,5 +23,5 @@ def train(flow, target_distribution, dim, epochs=100, batch_size=256):
         loss.backward()
         optimizer.step()
 
-        if i % 100 == 0:
+        if i % 10 == 0:
             print(f"epoch: {i} - loss: {loss.item()}")

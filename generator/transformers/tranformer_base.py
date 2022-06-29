@@ -11,9 +11,8 @@ class Transformer(torch.nn.Module):
     conditioner : torch.nn.Model
         A model.
     """
-    def __init__(self, conditioner):
+    def __init__(self, *args):
         super().__init__()
-        self.conditioner = conditioner
 
     @abc.abstractmethod
     def forward(self, pz_1: np.ndarray, pz_2: np.ndarray) -> (np.ndarray, float):

@@ -11,25 +11,43 @@ class AffineTransformer(Transformer):
     half.
 
     Performs transformation of form y = A x_1 + b where A, b are defined by
-    c(x_2), where c is a conditioning function on x with a two-dimensional
-    output, and is modeled by a neural network.
+    c_1(x_2) and c_2(x_2), where c_1 and c_2 are conditioning functions on x
+    which are modeled by a neural network.
 
     Parameters
     ----------
-    conditioner : torch.nn.Model
-        A model with output dimension 2
-    """
-    def __init__(self, conditioner):
-        super().__init__(conditioner)
+    scale_conditioner : torch.nn.Model
+        A model with output dimension D that scales the input values
 
+    shift_conditioner : torch.nn.Model
+        A model with output dimension D that shifts the input values
+
+    """
+    def __init__(self, shift_conditioner=None, scale_conditioner=None):
+        super().__init__()
+        self.shift_conditioner = shift_conditioner
+        self.scale_conditioner = scale_conditioner
+
+    def _get_scale_and_shift(self, coords):
+        if self.shift_conditioner is not None:
+            shift = self.shift_conditioner(coords)
+        else:
+            shift = torch.zeros_like(coords)
+
+        if self.scale_conditioner is not None:
+            scale = self.scale_conditioner(coords)
+        else:
+            scale = torch.zeros_like(coords)
+        return scale, shift
 
     def forward(self, pz_1, pz_2):
-        cond = self.conditioner(pz_2)
-        px_1 = torch.exp(cond[:, 0, None]) * pz_1 + cond[:, 1, None]
-        return torch.cat([px_1, pz_2]), log_jacobian_determinant(cond)
-
+        scale, shift = self._get_scale_and_shift(pz_2)
+        px_1 = torch.exp(scale) * pz_1 + shift
+        log_jac_det = scale.mean(-1)
+        return px_1, log_jac_det
 
     def inverse(self, px_1, px_2):
-        cond = self.conditioner(px_2)
-        pz_1 = torch.exp(-cond[:, 0, None]) * (px_1 - cond[:, 1, None])
-        return torch.cat([pz_1, px_2]), 1 / log_jacobian_determinant(cond)
+        scale, shift = self._get_scale_and_shift(px_2)
+        pz_1 = torch.exp(-scale) * (px_1 - shift)
+        log_jac_det = 1 / scale.mean(-1)
+        return pz_1, log_jac_det

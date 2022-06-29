@@ -7,12 +7,29 @@ def log_jacobian_determinant(cond):
 
 
 class AffineTransformer(Transformer):
-    def transform(self, pz_1, pz_2, cond):
-        px_1 = torch.exp(cond[:, 0]) * pz_1 + cond[:, 1]
-        px = torch.cat(px_1, pz_2)
-        return px, log_jacobian_determinant(cond)
+    """Affine transformation of one half of the input, conditioned on the other
+    half.
 
-    def inverse_transform(self, px_1, px_2, cond):
+    Performs transformation of form y = A x_1 + b where A, b are defined by
+    c(x_2), where c is a conditioning function on x with a two-dimensional
+    output, and is modeled by a neural network.
+
+    Parameters
+    ----------
+    conditioner : torch.nn.Model
+        A model with output dimension 2
+    """
+    def __init__(self, conditioner):
+        super().__init__(conditioner)
+
+
+    def forward(self, pz_1, pz_2):
+        cond = self.conditioner(pz_2)
+        px_1 = torch.exp(cond[:, 0]) * pz_1 + cond[:, 1]
+        return torch.cat(px_1, pz_2), log_jacobian_determinant(cond)
+
+
+    def inverse(self, px_1, px_2):
+        cond = self.conditioner(px_2)
         pz_1 = torch.exp(-cond[:, 0]) * (px_1 - cond[:, 1])
-        pz = torch.cat(pz_1, px_2)
-        return pz, 1 / log_jacobian_determinant(cond)
+        return torch.cat(pz_1, px_2), 1 / log_jacobian_determinant(cond)

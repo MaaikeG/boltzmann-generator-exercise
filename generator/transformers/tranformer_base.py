@@ -1,27 +1,36 @@
 import abc
 import numpy as np
+import torch.nn
 
 
-class Transformer:
-    """ Or: coupling layer """
+class Transformer(torch.nn.Module):
+    """Transforms one half of the input, conditioned on the other half.
+
+    Parameters
+    ----------
+    conditioner : torch.nn.Model
+        A model.
+    """
+    def __init__(self, conditioner):
+        super(Transformer, self).__init__()
+
+        self.conditioner = conditioner
 
     @abc.abstractmethod
-    def transform(self, pz_1: np.ndarray, pz_2: np.ndarray, cond: np.ndarray) -> (np.ndarray, float):
+    def forward(self, pz_1: np.ndarray, pz_2: np.ndarray) -> (np.ndarray, float):
         """Transform the prior distribution to the target distribution.
 
         Parameters
         ----------
         pz_1: np.ndarray (N, D)
-            The probabilities of the first part of the N samples in D dimensions.
-        pz_2: np.ndarray (M, D)
-            The probabilities of the second part of the N samples in D dimensions.
-        cond: np.ndarray (N, k)
-            The k conditioner values for the first N samples.
+            The probabilities of N samples in D dimensions.
+        pz_2: np.ndarray (N, k)
+            The k conditioner values for the N samples.
 
         Returns
         -------
-        px : np.ndarray(N+M, D)
-            the transformed probabilities
+        px : np.ndarray(N, D)
+            the forward transformed probabilities
         Log of the Jacobian determinant : float
             The natural logarithm of the determinant of the Jacobian of the
             transformation.
@@ -29,24 +38,22 @@ class Transformer:
         pass
 
     @abc.abstractmethod
-    def inverse_transform(self, px_1: np.ndarray, px_2: np.ndarray, cond: np.ndarray) -> (np.ndarray, float):
+    def inverse(self, px: np.ndarray, cond: np.ndarray) -> (np.ndarray, float):
         """Transform (normalize) samples from the target distribution back to
          the prior distribution (usually a multivariate Gaussian).
 
         Parameters
         ----------
-        px_1: np.ndarray (N, D)
-            The probabilities of the first part of the N samples in D dimensions.
-        px_2: np.ndarray (M, D)
-            The probabilities of the first part of the N samples in D dimensions.
+        px: np.ndarray (N, D)
+            The probabilities of the N samples in D dimensions.
 
         cond: np.ndarray (N, k)
             The k conditioner values for the N samples.
 
         Returns
         -------
-        pz: np.ndarray(N+M, D)
-            the transformed samples to the prior distribution
+        pz: np.ndarray(N, D)
+            the inverse transformed probabilities
         Log of the Jacobian determinant : float
             The natural logarithm of the determinant of the Jacobian of the
             transformation.

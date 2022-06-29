@@ -1,5 +1,5 @@
 import numpy as np
-from potential_base import Potential
+from .potential_base import Potential
 
 
 class MultiVariateGaussian:
@@ -16,12 +16,12 @@ class MultiVariateGaussian:
 
 class NDGaussianWell(Potential):
     def __init__(self, mu_s, sigma_s):
-        self.n_dimensions = mu_s[0].shape()
+        self.n_dimensions = mu_s[0].shape
         self.potentials = []
         for mu, sigma in zip(mu_s, sigma_s):
             if mu.shape != self.n_dimensions:
                 raise ValueError
-            if not (sigma.shape == self.n_dimensions).all():
+            if not (np.asarray(sigma.shape) == self.n_dimensions).all():
                 raise ValueError
 
             self.potentials.append(MultiVariateGaussian(mu, sigma))
@@ -34,4 +34,4 @@ class TwoDimensionalDoubleWell(NDGaussianWell):
     def __init__(self):
         mu_s = [np.asarray([0., 0.]), np.asarray([2.5, 2.5])]
         sigma_s = [np.asarray([[1., 0.], [0.,  1.]]), np.asarray([[1., 0.], [0.,  1.]])]
-        super().init(mu_s, sigma_s)
+        super().__init__(mu_s, sigma_s)

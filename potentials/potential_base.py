@@ -4,6 +4,10 @@ import numpy as np
 
 class Potential:
     @abc.abstractmethod
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
     def potential(self, *args, **kwargs):
         pass
 

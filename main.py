@@ -1,16 +1,22 @@
-# This is a sample Python script.
+import torch.nn.functional
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import potentials.gaussian_well
+import train
+from generator.invertible_block import InvertibleBlock
+from generator.transformers.affine_transformer import AffineTransformer
+from generator.conditioners.conditioner import Conditioner
+from generator.flow import Flow
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+target_distribution = potentials.gaussian_well.TwoDimensionalDoubleWell()
 
+blocks = [InvertibleBlock(
+    transformer=AffineTransformer(
+        conditioner=Conditioner(dim_in=1,
+                                dims_out=[2, 4, 2, 1],
+                                activation=torch.nn.Tanh)
+    ))]
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+flow = Flow(blocks=blocks)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+train.train(flow, target_distribution, dim=2)

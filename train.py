@@ -4,7 +4,7 @@ from torch.optim import SGD
 
 def train(flow, target_distribution, dim, epochs=100, batch_size=256):
 
-    optimizer = SGD(flow.parameters(), lr=0.01)
+    optimizer = SGD(flow.parameters(), lr=0.1)
 
     for i in range(epochs):
         optimizer.zero_grad()
@@ -23,3 +23,6 @@ def train(flow, target_distribution, dim, epochs=100, batch_size=256):
 
         loss.backward()
         optimizer.step()
+
+        if i % 100 == 0:
+            print(f"epoch: {i} - loss: {loss.item()}")

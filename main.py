@@ -48,7 +48,7 @@ pos = target_distribution.potential(pos.flatten(start_dim=0, end_dim=-2))
 ax0.contourf(X, Y, pos.reshape(X.shape), cmap='jet', levels=50)
 
 # generate samples
-samples = torch.normal(mean=0, std=1, size=[1000, 2])
+samples = torch.normal(mean=0, std=1, size=[10_000, 2])
 
 with torch.no_grad():
     # transform them to our target distribution
@@ -57,4 +57,7 @@ with torch.no_grad():
 ax1.hist2d(*samples.T.numpy(), bins=50)
 ax2.hist2d(*transformed_samples.numpy().T, bins=50, range=[[-4, 4], [-8, 8]])
 
+ax0.set_title('potential')
+ax1.set_title('prior')
+ax2.set_title('transformed')
 plt.show()

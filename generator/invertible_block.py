@@ -2,16 +2,37 @@ import torch.nn
 
 
 class InvertibleBlock(torch.nn.Module):
+    """ RealNVP block which transforms one half of the input dimensions,
+    conditioned on the other half.
 
-    def __init__(self, transformer):
+    Parameters
+    ----------
+    transformer : transformers.Transformer
+        the transformer
+    which : torch.IntTensor
+        which dimensions are to be transformed
+    on : torch.IntTensor
+        the dimensions on which the transformed dimensions are to be conditioned.
+    """
+    def __init__(self, transformer, which, on):
         super().__init__()
+
         self.transformer = transformer
 
-    def forward(self, samples):
-        # split samples into z1 and z2
-        n = samples.shape[-1] // 2
-        z1, z2 = torch.split(samples, (n, n), dim=-1)
+        if len(which) != len(on):
+            raise ValueError
 
+        self.which = which
+        self.on = on
+
+    def _split(self, samples):
+        # split samples into z1 and z2
+        set1 = torch.index_select(samples, dim=-1, index=self.which)
+        set2 = torch.index_select(samples, dim=-1, index=self.on)
+        return set1, set2
+
+    def forward(self, samples):
+        z1, z2 = self._split(samples)
         # pass through transformer with args z1, z2, cond(y)
         x1, jac_det = self.transformer.forward(z1, z2)
 
@@ -19,8 +40,7 @@ class InvertibleBlock(torch.nn.Module):
 
 
     def inverse(self, samples):
-        n = samples.shape[-1] // 2
-        x1, x2 = torch.split(samples, (n, n), dim=-1)
+        x1, x2 = self._split(samples)
 
         # pass through transformer_inverse with args x1, x2 and cond(x2)
         z1, jac_det = self.transformer.inverse(x1, x2)

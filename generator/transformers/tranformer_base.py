@@ -5,11 +5,6 @@ import torch.nn
 
 class Transformer(torch.nn.Module):
     """Transforms one half of the input, conditioned on the other half.
-
-    Parameters
-    ----------
-    conditioner : torch.nn.Model
-        A model.
     """
     def __init__(self, *args):
         super().__init__()

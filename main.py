@@ -9,28 +9,32 @@ from generator.transformers.affine_transformer import AffineTransformer
 from generator.conditioners.conditioner import Conditioner
 from generator.flow import Flow
 
-
 target_distribution = potentials.harmonic_well.HarmonicWell()
 
 dims = 2
 
-blocks = [InvertibleBlock(
-    transformer=AffineTransformer(
-        scale_conditioner=Conditioner(dim_in=dims//2,
-                                dims_out=[4, 8, 4, dims//2],
-                                activation=torch.nn.Tanh),
-        shift_conditioner=Conditioner(dim_in=dims//2,
-                                      dims_out=[4, 8, 4, dims//2],
-                                      activation=torch.nn.ReLU)
-    ))]
+blocks = [InvertibleBlock(which=torch.tensor([0], dtype=torch.long),
+                          on=torch.tensor([1], dtype=torch.long),
+                          transformer=AffineTransformer(
+                              scale_conditioner=Conditioner(dims=[dims // 2, 4, dims // 2],
+                                                            activation=torch.nn.Tanh),
+                              shift_conditioner=Conditioner(dims=[dims // 2, 4, dims // 2],
+                                                            activation=torch.nn.ReLU)
+                          )),
+          InvertibleBlock(which=torch.tensor([1], dtype=torch.long),
+                          on=torch.tensor([0], dtype=torch.long),
+                          transformer=AffineTransformer(scale_conditioner=Conditioner(dims=[dims // 2, 4, dims // 2],
+                                                                                      activation=torch.nn.Tanh),
+                                                        shift_conditioner=Conditioner(dims=[dims // 2, 4, dims // 2],
+                                                                                      activation=torch.nn.ReLU)
+                                                        )),
+          ]
 
 flow = Flow(blocks=blocks)
 
-train.train(flow, target_distribution, dim=2, epochs=100)
-
+train.train(flow, target_distribution, dim=2, epochs=1000)
 
 fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(12, 4))
-
 
 xs = torch.linspace(-5, 5, 50)
 ys = torch.linspace(-8, 8, 50)
@@ -50,7 +54,7 @@ with torch.no_grad():
     # transform them to our target distribution
     transformed_samples, jac_log = flow(samples)
 
-ax1.scatter(*samples.T)
-ax2.scatter(*transformed_samples.T)
+ax1.hist2d(*samples.T.numpy(), bins=50)
+ax2.hist2d(*transformed_samples.numpy().T, bins=50, range=[[-4, 4], [-8, 8]])
 
 plt.show()

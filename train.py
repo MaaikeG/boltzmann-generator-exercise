@@ -1,10 +1,10 @@
 import torch
-from torch.optim import SGD
+from torch.optim import Adam
 
 
 def train(flow, target_distribution, dim, epochs=100, batch_size=1024):
 
-    optimizer = SGD(flow.parameters(), lr=0.1)
+    optimizer = Adam(flow.parameters(), lr=0.01)
 
     for i in range(epochs):
         optimizer.zero_grad()

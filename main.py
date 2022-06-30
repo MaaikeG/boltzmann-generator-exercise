@@ -12,13 +12,15 @@ from generator.flow import Flow
 
 target_distribution = potentials.harmonic_well.HarmonicWell()
 
+dims = 2
+
 blocks = [InvertibleBlock(
     transformer=AffineTransformer(
-        scale_conditioner=Conditioner(dim_in=2,
-                                dims_out=[4, 8, 4, 2],
+        scale_conditioner=Conditioner(dim_in=dims//2,
+                                dims_out=[4, 8, 4, dims//2],
                                 activation=torch.nn.Tanh),
-        shift_conditioner=Conditioner(dim_in=2,
-                                      dims_out=[4, 8, 4, 2],
+        shift_conditioner=Conditioner(dim_in=dims//2,
+                                      dims_out=[4, 8, 4, dims//2],
                                       activation=torch.nn.ReLU)
     ))]
 

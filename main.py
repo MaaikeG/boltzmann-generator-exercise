@@ -1,8 +1,8 @@
-import torch
 import torch.nn.functional
 import matplotlib.pyplot as plt
 
-from priors.gaussian_prior import GaussianPrior
+from generator.boltzmann_generator import BoltzmannGenerator
+from potentials.gaussian_prior import GaussianPrior
 import train
 import potentials.harmonic_well
 from generator.invertible_block import InvertibleBlock
@@ -38,14 +38,43 @@ for i in range(2):
 
 flow = Flow(blocks=blocks)
 
-sampler = MCMC(sampling_range=torch.tensor([[-5, 5], [-8, 8]]), n_samples=2000, n_dimensions=2, max_step=1)
-samples = sampler.get_trajectory(potential=target_distribution, r_initial=torch.tensor([-3, 0]))
-samples = torch.cat([samples, (sampler.get_trajectory(potential=target_distribution, r_initial=torch.tensor([3, 0])))])
+sampler = MCMC(sampling_range=torch.tensor([[-5, 5], [-8, 8]]), n_samples=1024, n_dimensions=2, max_step=1)
+samples = sampler.get_trajectory(potential=target_distribution.potential, r_initial=torch.tensor([-3, 0]))
+samples = torch.cat(
+    [samples, (sampler.get_trajectory(potential=target_distribution.potential, r_initial=torch.tensor([3, 0])))])
 
-prior = GaussianPrior(dim=2)
+# plt.hist2d(*samples.T.numpy(), bins=50, range=[[-4, 4], [-8, 8]])
+# plt.show()
 
-train.train_by_example(flow, samples, prior, epochs=100, batch_size=1024)
-train.train_by_energy(flow, target_distribution=target_distribution, prior=prior, epochs=1000)
+bg = BoltzmannGenerator(flow=flow, prior=GaussianPrior(dim=2), target=target_distribution)
+
+train.train_by_example(bg, samples, epochs=200, batch_size=1024)
+train.train_by_energy(bg, epochs=1000)
+
+
+with torch.no_grad():
+    samples, weights = bg.sample(1000, True)
+n_bins = 20
+buckets = torch.linspace(-8, 8, n_bins)
+bucket_centers = buckets - (buckets[1] - buckets[0])
+binned_samples = torch.bucketize(samples[:, 0].detach(), buckets)
+
+pmf = torch.zeros(n_bins)
+
+for i in range(len(pmf)):
+    indices = torch.where(binned_samples == i)
+    if len(indices[0]) > 0:
+        pmf[i] = -torch.logsumexp(weights[indices].detach(), 0)
+    else:
+        pmf[i] = 1e10
+
+# plot the real potential over x
+plt.plot(bucket_centers, bg.target.potential(torch.vstack([bucket_centers, torch.zeros([n_bins])]).T))
+# plot the computed pmf
+plt.plot(bucket_centers, pmf)
+plt.ylim(-20, 40)
+plt.show()
+
 
 fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(12, 4))
 
@@ -60,7 +89,7 @@ X, Y = torch.meshgrid(xs, ys)
 pos = torch.empty(X.shape + (2,))
 pos[:, :, 0] = X
 pos[:, :, 1] = Y
-pos = target_distribution(pos.flatten(start_dim=0, end_dim=-2))
+pos = target_distribution.potential(pos.flatten(start_dim=0, end_dim=-2))
 ax0.contourf(X, Y, pos.reshape(X.shape), cmap='jet', levels=50)
 ax0.set_title('potential')
 

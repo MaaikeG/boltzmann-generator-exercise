@@ -1,22 +1,20 @@
 import torch
-from .potential_base import Potential
-from util.multivariate_gaussian import MultiVariateGaussian
+from .distribution_base import Distribution
+from torch.distributions.multivariate_normal import MultivariateNormal
 
 
-class NDGaussianWell(Potential):
-    def __init__(self, mu_s, sigma_s):
+class NDGaussianWell(Distribution):
+
+    def __init__(self, mu, sigma):
         super().__init__()
+        self.distribution = MultivariateNormal(loc=mu, covariance_matrix=sigma)
 
-        self.n_dimensions = mu_s[0].shape[0]
-        self.gaussians = []
-        for mu, sigma in zip(mu_s, sigma_s):
-            if mu.shape[0] != self.n_dimensions:
-                raise ValueError
-            if not (torch.Tensor([sigma.shape]) == self.n_dimensions).all():
-                raise ValueError
 
-            self.gaussians.append(MultiVariateGaussian(mu, sigma))
+    def potential(self, r):
+        return self._cutoff(-torch.log(self.distribution.log_prob(r)))
 
-    def __call__(self, coords, **kwargs):
-        return sum([self._cutoff(-torch.log(N(coords))) for N in self.gaussians])
+    # def probability(self, r):
+    #     return torch.exp(self.distribution.log_prob(r))
 
+    def log_prob(self, r):
+        return self.distribution.log_prob(r)

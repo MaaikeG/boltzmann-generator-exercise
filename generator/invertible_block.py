@@ -25,11 +25,13 @@ class InvertibleBlock(torch.nn.Module):
         self.which = which
         self.on = on
 
+
     def _split(self, samples):
         # split samples into z1 and z2
         set1 = torch.index_select(samples, dim=-1, index=self.which)
         set2 = torch.index_select(samples, dim=-1, index=self.on)
         return set1, set2
+
 
     def forward(self, samples):
         z1, z2 = self._split(samples)

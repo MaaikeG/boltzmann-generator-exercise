@@ -22,7 +22,7 @@ class Flow(torch.nn.Module):
 
     def inverse(self, samples):
         total_jac_det_log = 0
-        for block in self.blocks.reverse():
+        for block in reversed(self.blocks):
             samples, jac_det_log = block.inverse(samples)
             total_jac_det_log += jac_det_log
         return samples, total_jac_det_log

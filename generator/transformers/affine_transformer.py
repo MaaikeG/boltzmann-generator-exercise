@@ -49,5 +49,5 @@ class AffineTransformer(Transformer):
     def inverse(self, px_1, px_2):
         scale, shift = self._get_scale_and_shift(px_2)
         pz_1 = torch.exp(-scale) * (px_1 - shift)
-        log_jac_det = 1 / scale.mean(-1)
+        log_jac_det = -scale.mean(-1)
         return pz_1, log_jac_det

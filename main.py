@@ -53,7 +53,7 @@ train.train_by_energy(bg, epochs=1000)
 
 
 with torch.no_grad():
-    samples, weights = bg.sample(1000, True)
+    samples, weights = bg.sample(10000, True)
 n_bins = 20
 buckets = torch.linspace(-8, 8, n_bins)
 bucket_centers = buckets - (buckets[1] - buckets[0])
@@ -68,11 +68,12 @@ for i in range(len(pmf)):
     else:
         pmf[i] = 1e10
 
-# plot the real potential over x
-plt.plot(bucket_centers, bg.target.potential(torch.vstack([bucket_centers, torch.zeros([n_bins])]).T))
-# plot the computed pmf
-plt.plot(bucket_centers, pmf)
-plt.ylim(-20, 40)
+# plot the real potential over x...
+plt.plot(bucket_centers, bg.target.potential(torch.vstack([bucket_centers, torch.zeros([n_bins])]).T), label="Target potential")
+# ... and the computed pmf
+plt.plot(bucket_centers, pmf, label="BG estimate")
+plt.ylim(-30, 30)
+plt.legend()
 plt.show()
 
 

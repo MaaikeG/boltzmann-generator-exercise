@@ -4,9 +4,9 @@ import torch
 
 class Distribution:
 
-    def __init__(self, cutoff_energy=1e10):
+    def __init__(self, beta=1, cutoff_energy=1e10):
+        self._beta = beta
         self._cutoff_energy = cutoff_energy
-        pass
 
 
     @abc.abstractmethod
@@ -19,7 +19,7 @@ class Distribution:
     def log_prob(self, r):
         """Return the logarithm of the probability (unnormalized) at the
         coordinates. """
-        return -self.potential(r)
+        return - self._beta * self.potential(r)
 
 
     def _cutoff(self, potentials):

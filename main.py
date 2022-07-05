@@ -11,7 +11,7 @@ from generator.conditioners.conditioner import Conditioner
 from generator.flow import Flow
 from sampling.mcmc import MCMC
 
-target_distribution = potentials.harmonic_well.HarmonicWell()
+target_distribution = potentials.harmonic_well.HarmonicWell(beta=0.5)
 torch.random.manual_seed(1)
 
 dims = 2
@@ -52,6 +52,9 @@ train.train_by_example(bg, samples, epochs=200, batch_size=1024)
 train.train_by_energy(bg, epochs=1000)
 
 
+# generate samples
+samples = torch.normal(mean=0, std=1, size=[10_000, 2])
+
 with torch.no_grad():
     samples, weights = bg.sample(10000, True)
 n_bins = 20
@@ -68,11 +71,17 @@ for i in range(len(pmf)):
     else:
         pmf[i] = 1e10
 
+fig, (ax0, ax1) = plt.subplots(1, 2)
 # plot the real potential over x...
-plt.plot(bucket_centers, bg.target.potential(torch.vstack([bucket_centers, torch.zeros([n_bins])]).T), label="Target potential")
+xs = torch.linspace(-8, 8, 50)
+ax0.plot(xs, torch.exp(bg.target.log_prob(torch.vstack([xs, torch.zeros([50])]).T)), label="Target potential")
+ax1.plot(xs, bg.target.potential(torch.vstack([xs, torch.zeros([50])]).T), label="Target potential")
+
 # ... and the computed pmf
-plt.plot(bucket_centers, pmf, label="BG estimate")
-plt.ylim(-30, 30)
+ax0.plot(bucket_centers, torch.exp(-pmf), label="BG estimate")
+ax1.plot(bucket_centers, pmf, label="BG estimate")
+ax0.set_ylim(-30, 30)
+ax1.set_ylim(-30, 30)
 plt.legend()
 plt.show()
 

@@ -32,13 +32,18 @@ class InvertibleBlock(torch.nn.Module):
         set2 = torch.index_select(samples, dim=-1, index=self.on)
         return set1, set2
 
+    def _recombine(self, set1, set2):
+        res = torch.zeros([set1.shape[0], set1.shape[-1] + set2.shape[-1]])
+        res[:, self.which] = set1
+        res[:, self.on] = set2
+        return res
 
     def forward(self, samples):
         z1, z2 = self._split(samples)
         # pass through transformer with args z1, z2, cond(y)
         x1, jac_det = self.transformer.forward(z1, z2)
 
-        return torch.hstack([x1, z2]), jac_det
+        return self._recombine(x1, z2), jac_det
 
 
     def inverse(self, samples):
@@ -47,4 +52,4 @@ class InvertibleBlock(torch.nn.Module):
         # pass through transformer_inverse with args x1, x2 and cond(x2)
         z1, jac_det = self.transformer.inverse(x1, x2)
 
-        return torch.hstack([z1, x2]), jac_det
+        return self._recombine(z1, x2), jac_det

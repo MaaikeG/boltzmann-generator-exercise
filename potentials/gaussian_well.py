@@ -13,8 +13,6 @@ class NDGaussianWell(Distribution):
     def potential(self, r):
         return self._cutoff(-torch.log(self.distribution.log_prob(r)))
 
-    # def probability(self, r):
-    #     return torch.exp(self.distribution.log_prob(r))
 
     def log_prob(self, r):
         return self.distribution.log_prob(r)
